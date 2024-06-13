@@ -1,39 +1,35 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { io, Socket } from "socket.io-client";
 
 const useChat = () => {
   const [messages, setMessages] = useState<string[]>([]);
   const [message, setMessage] = useState<string>("");
-  const ws = useRef<WebSocket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    ws.current = new WebSocket("ws://localhost:8080");
+    const newSocket = io("http://localhost:8080");
+    setSocket(newSocket);
 
-    ws.current.onopen = () => {
+    newSocket.on("connect", () => {
       console.log("Connected to the server");
-    };
+    });
 
-    ws.current.onmessage = (event) => {
-      const newMessage = event.data;
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-    };
+    newSocket.on("chat", (msg: string) => {
+      setMessages((prevMessages) => [...prevMessages, msg]);
+    });
 
-    ws.current.onerror = (error) => {
-      console.log(`WebSocket error: ${error}`);
-    };
-
-    ws.current.onclose = () => {
-      console.log("WebSocket connection closed");
-    };
+    newSocket.on("disconnect", () => {
+      console.log("Disconnected from the server");
+    });
 
     return () => {
-      ws.current?.close();
+      newSocket.disconnect();
     };
   }, []);
 
   const sendMessage = () => {
-    if (message.trim() !== "") {
-      const chatMessage = { type: "text", data: message };
-      ws.current?.send(JSON.stringify(chatMessage));
+    if (message.trim() !== "" && socket) {
+      socket.emit("chat", message);
       setMessage(""); // 메시지 전송 후 입력 필드를 비움
     }
   };

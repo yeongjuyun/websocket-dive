@@ -1,8 +1,24 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import useChat from "../hooks/useTextChat";
 
 const Chat: React.FC = () => {
   const { messages, message, setMessage, sendMessage } = useChat();
+  const chatboxRef = useRef<HTMLDivElement>(null);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(e.target.value);
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage();
+  };
+
+  useEffect(() => {
+    if (chatboxRef.current) {
+      chatboxRef.current.scrollTop = chatboxRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   return (
     <div
@@ -23,6 +39,7 @@ const Chat: React.FC = () => {
       <h1>WebSocket Chat</h1>
       <div
         id="chatbox"
+        ref={chatboxRef}
         style={{
           width: "100%",
           height: "300px",
@@ -48,7 +65,8 @@ const Chat: React.FC = () => {
           </div>
         ))}
       </div>
-      <div
+      <form
+        onSubmit={handleSendMessage}
         style={{
           display: "flex",
           width: "100%",
@@ -58,7 +76,7 @@ const Chat: React.FC = () => {
           type="text"
           id="messageInput"
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={handleInputChange}
           placeholder="Type a message..."
           style={{
             flex: 1,
@@ -69,7 +87,7 @@ const Chat: React.FC = () => {
           }}
         />
         <button
-          onClick={sendMessage}
+          type="submit"
           style={{
             padding: "10px 20px",
             border: "none",
@@ -82,7 +100,7 @@ const Chat: React.FC = () => {
         >
           Send
         </button>
-      </div>
+      </form>
     </div>
   );
 };
