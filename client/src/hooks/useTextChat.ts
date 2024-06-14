@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 
-const useChat = () => {
-  const [messages, setMessages] = useState<string[]>([]);
+const useChat = ({ username, room }: { username: string; room: string }) => {
+  const [messages, setMessages] = useState<
+    { username: string; message: string }[]
+  >([]);
   const [message, setMessage] = useState<string>("");
   const [socket, setSocket] = useState<Socket | null>(null);
 
@@ -14,7 +16,9 @@ const useChat = () => {
       console.log("Connected to the server");
     });
 
-    newSocket.on("chat", (msg: string) => {
+    newSocket.emit("joinRoom", { room, username });
+
+    newSocket.on("chat", (msg: { username: string; message: string }) => {
       setMessages((prevMessages) => [...prevMessages, msg]);
     });
 
@@ -27,10 +31,10 @@ const useChat = () => {
     };
   }, []);
 
-  const sendMessage = () => {
+  const sendMessage = (username: string) => {
     if (message.trim() !== "" && socket) {
-      socket.emit("chat", message);
-      setMessage(""); // 메시지 전송 후 입력 필드를 비움
+      socket.emit("chat", { room, username, message });
+      setMessage("");
     }
   };
 

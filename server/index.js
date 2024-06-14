@@ -28,7 +28,6 @@ app.use(express.urlencoded({ extended: true }));
 
 const JWT_SECRET = "your_jwt_secret";
 
-// 사용자 로그인 엔드포인트
 app.post("/login", (req, res) => {
   const { username } = req.body;
   if (!username) {
@@ -40,7 +39,7 @@ app.post("/login", (req, res) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "None", // SameSite 설정 추가
+    sameSite: "None",
   });
 
   res.send("Login successful");
@@ -69,13 +68,44 @@ app.get("/protected", authenticateToken, (req, res) => {
 io.on("connection", (socket) => {
   console.log("a user connected");
 
-  socket.on("chat", (msg) => {
-    console.log("message: " + msg);
-    io.emit("chat", msg);
+  socket.on("joinRoom", (data) => {
+    const { room, username } = data;
+    socket.join(room);
+    console.log(`User ${username} joined room: ${room}`);
+
+    socket.data.username = username;
+    socket.data.room = room;
+
+    socket.to(room).emit("chat", {
+      username: "System",
+      message: `${username} 님이 입장하셨습니다.`,
+    });
+  });
+
+  socket.on("chat", (data) => {
+    console.log(`message: ${data.username}: ${data.message}`);
+    io.to(data.room).emit("chat", {
+      username: data.username,
+      message: data.message,
+    });
+  });
+
+  socket.on("signal", (data) => {
+    io.to(data.room).emit("signal", data);
   });
 
   socket.on("disconnect", () => {
-    console.log("user disconnected");
+    const username = socket.data.username;
+    const room = socket.data.room;
+
+    if (room && username) {
+      io.to(room).emit("chat", {
+        username: "System",
+        message: `${username} 님이 나가셨습니다.`,
+      });
+    }
+
+    console.log(`User ${username} disconnected from room: ${room}`);
   });
 });
 

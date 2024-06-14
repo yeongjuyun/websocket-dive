@@ -1,8 +1,12 @@
-import React, { useEffect, useRef } from "react";
-import useChat from "../hooks/useTextChat";
+import React, { useEffect, useRef, useState } from "react";
+import useTextChat from "../hooks/useTextChat";
 
-const Chat: React.FC = () => {
-  const { messages, message, setMessage, sendMessage } = useChat();
+const TextChat: React.FC<{ username: string }> = ({ username }) => {
+  const [room, setRoom] = useState("default");
+  const { messages, message, setMessage, sendMessage } = useTextChat({
+    username,
+    room,
+  });
   const chatboxRef = useRef<HTMLDivElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -11,7 +15,7 @@ const Chat: React.FC = () => {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    sendMessage();
+    sendMessage(username);
   };
 
   useEffect(() => {
@@ -36,10 +40,29 @@ const Chat: React.FC = () => {
         backgroundColor: "#fff",
       }}
     >
-      <h1>WebSocket Chat</h1>
+      <h1>WebSocket Text Chat</h1>
       <div
-        id="chatbox"
+        style={{
+          marginBottom: "10px",
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Enter room name"
+          value={room}
+          onChange={(e) => setRoom(e.target.value)}
+          style={{
+            padding: "10px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            outline: "none",
+            marginRight: "10px",
+          }}
+        />
+      </div>
+      <div
         ref={chatboxRef}
+        id="chatbox"
         style={{
           width: "100%",
           height: "300px",
@@ -61,7 +84,7 @@ const Chat: React.FC = () => {
               backgroundColor: "#e0e0e0",
             }}
           >
-            {msg}
+            <strong>{msg.username}:</strong> {msg.message}
           </div>
         ))}
       </div>
@@ -74,16 +97,16 @@ const Chat: React.FC = () => {
       >
         <input
           type="text"
-          id="messageInput"
           value={message}
           onChange={handleInputChange}
           placeholder="Type a message..."
           style={{
-            flex: 1,
+            flexGrow: 1,
             padding: "10px",
             border: "1px solid #ccc",
-            borderRadius: "4px 0 0 4px",
+            borderRadius: "4px",
             outline: "none",
+            marginRight: "10px",
           }}
         />
         <button
@@ -91,7 +114,7 @@ const Chat: React.FC = () => {
           style={{
             padding: "10px 20px",
             border: "none",
-            borderRadius: "0 4px 4px 0",
+            borderRadius: "4px",
             backgroundColor: "#007bff",
             color: "#fff",
             cursor: "pointer",
@@ -105,4 +128,4 @@ const Chat: React.FC = () => {
   );
 };
 
-export default Chat;
+export default TextChat;
