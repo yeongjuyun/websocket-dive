@@ -3,7 +3,7 @@ import useSocket from "../hooks/useSocket";
 
 const Chat: React.FC<{ username: string }> = ({ username }) => {
   const [room, setRoom] = useState("default");
-  const { messages, message, setMessage, sendMessage, users, toggleMic } =
+  const { messages, message, users, setMessage, sendMessage, toggleMic } =
     useSocket({
       username,
       room,
