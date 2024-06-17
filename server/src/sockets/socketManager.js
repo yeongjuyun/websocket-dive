@@ -46,25 +46,6 @@ const initSocket = (server) => {
       }
     });
 
-    socket.on("startAudio", (data) => {
-      const { username } = data;
-      const room = socket.data.room;
-      socket.to(room).emit("audioStreamStarted", { username });
-    });
-
-    socket.on("audioData", (track) => {
-      const room = socket.data.room;
-      if (room) {
-        socket.to(room).emit("audioData", track);
-      }
-    });
-
-    socket.on("stopAudio", (data) => {
-      const { username } = data;
-      const room = socket.data.room;
-      socket.to(room).emit("audioStreamStopped", { username });
-    });
-
     socket.on("chat", (data) => {
       console.log(`message - ${data.username}: ${data.message}`);
 

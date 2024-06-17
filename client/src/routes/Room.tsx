@@ -1,7 +1,10 @@
-import React, { useState } from "react";
-import TextChat from "./Chat";
+import { useState } from "react";
+import Chat from "../components/Chat";
+import { useParams } from "react-router-dom";
 
-const ChatApp: React.FC = () => {
+const Room: React.FC = () => {
+  const { roomId } = useParams();
+
   const [username, setUsername] = useState<string>("");
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
@@ -23,11 +26,7 @@ const ChatApp: React.FC = () => {
     );
   }
 
-  return (
-    <div>
-      <TextChat username={username} />
-    </div>
-  );
+  return <div>{roomId && <Chat username={username} roomId={roomId} />}</div>;
 };
 
-export default ChatApp;
+export default Room;

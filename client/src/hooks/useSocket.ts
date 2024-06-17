@@ -18,8 +18,6 @@ const useChat = ({ username, room }: { username: string; room: string }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [micOn, setMicOn] = useState<boolean>(false);
-  const audioStreamRef = useRef<MediaStream | null>(null);
-  const audioElementsRef = useRef<{ [key: string]: HTMLAudioElement }>({});
 
   useEffect(() => {
     const newSocket = io("http://localhost:8080");
@@ -38,22 +36,6 @@ const useChat = ({ username, room }: { username: string; room: string }) => {
       setUsers(userList);
     });
 
-    newSocket.on(
-      "audioData",
-      ({ username, audioBlob }: { username: string; audioBlob: Blob }) => {
-        if (audioElementsRef.current[username]) {
-          const audioURL = URL.createObjectURL(audioBlob);
-          audioElementsRef.current[username].src = audioURL;
-          audioElementsRef.current[username].play();
-        } else {
-          const audioElement = new Audio();
-          audioElement.src = URL.createObjectURL(audioBlob);
-          audioElement.play();
-          audioElementsRef.current[username] = audioElement;
-        }
-      }
-    );
-
     newSocket.on("disconnect", () => {
       console.log("Disconnected from the server");
     });
@@ -62,39 +44,6 @@ const useChat = ({ username, room }: { username: string; room: string }) => {
       newSocket.disconnect();
     };
   }, [username, room]);
-
-  useEffect(() => {
-    if (micOn) {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices
-          .getUserMedia({ audio: true })
-          .then((stream) => {
-            audioStreamRef.current = stream;
-            if (socket) {
-              socket.emit("startAudio", { username });
-              stream.getTracks().forEach((track) => {
-                socket.emit("audioData", track);
-                track.onended = () => {
-                  socket.emit("stopAudio", { username });
-                };
-              });
-            }
-          })
-          .catch((error) => {
-            console.error("Error accessing microphone:", error);
-          });
-      } else {
-        console.error("getUserMedia not supported on your browser!");
-      }
-    } else {
-      if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach((track) => track.stop());
-        audioStreamRef.current = null;
-      }
-
-      if (socket) socket.emit("stopAudio", { username });
-    }
-  }, [micOn, socket, username]);
 
   const sendMessage = (username: string) => {
     if (socket && message.trim() !== "") {

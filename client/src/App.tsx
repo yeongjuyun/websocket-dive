@@ -1,11 +1,16 @@
 import React from "react";
-import ChatApp from "./components/ChatApp";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Room from "./routes/Room";
+import CreateRoom from "./routes/CreateRoom";
 
 const App: React.FC = () => {
   return (
-    <div className="App">
-      <ChatApp />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" Component={CreateRoom}></Route>
+        <Route path="/room/:roomId" Component={Room}></Route>
+      </Routes>
+    </BrowserRouter>
   );
 };
 

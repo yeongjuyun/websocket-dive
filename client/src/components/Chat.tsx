@@ -1,14 +1,22 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import useSocket from "../hooks/useSocket";
 
-const Chat: React.FC<{ username: string }> = ({ username }) => {
-  const [room, setRoom] = useState("default");
+const Chat: React.FC<{ roomId: string; username: string }> = ({
+  roomId,
+  username,
+}) => {
   const { messages, message, users, setMessage, sendMessage, toggleMic } =
     useSocket({
       username,
-      room,
+      room: roomId,
     });
   const chatboxRef = useRef<HTMLDivElement>(null);
+
+  const sortedUsers = [...users].sort((a, b) => {
+    if (a.status === "online" && b.status === "offline") return -1;
+    if (a.status === "offline" && b.status === "online") return 1;
+    return 0;
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
@@ -41,7 +49,7 @@ const Chat: React.FC<{ username: string }> = ({ username }) => {
         backgroundColor: "#fff",
       }}
     >
-      <h1>WebSocket Chat: {room}</h1>
+      <h1>WebSocket Chat: {roomId}</h1>
       <div
         style={{
           display: "flex",
@@ -65,9 +73,14 @@ const Chat: React.FC<{ username: string }> = ({ username }) => {
               height: "300px",
               padding: "10px",
               margin: 0,
+              overflowY: "auto",
             }}
           >
-            {users.map((user, index) => {
+            {sortedUsers.map((user, index) => {
+              const userStyle = {
+                color: user.status === "online" ? "green" : "gray",
+                fontWeight: user.status === "online" ? "bold" : "normal",
+              };
               return (
                 <li
                   key={index}
@@ -75,14 +88,22 @@ const Chat: React.FC<{ username: string }> = ({ username }) => {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    marginBottom: "5px",
                   }}
                 >
-                  <span>
+                  <span style={userStyle}>
                     {user.username} ({user.status})
                   </span>
                   <button
                     onClick={() => user.username === username && toggleMic()}
-                    style={{ marginLeft: "10px" }}
+                    style={{
+                      marginLeft: "10px",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      padding: "5px 10px",
+                    }}
                   >
                     {user.micOn ? "🔊" : "🔇"}
                   </button>
