@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import TextChat from "./TextChat";
-import VoiceChat from "./VoiceChat";
+import TextChat from "./Chat";
 
 const ChatApp: React.FC = () => {
   const [username, setUsername] = useState<string>("");
@@ -27,7 +26,6 @@ const ChatApp: React.FC = () => {
   return (
     <div>
       <TextChat username={username} />
-      {/* <VoiceChat /> */}
     </div>
   );
 };

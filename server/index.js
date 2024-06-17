@@ -9,7 +9,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "http://172.30.10.105:3000",
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -17,7 +17,7 @@ const io = new Server(server, {
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "http://172.30.10.105:3000",
     methods: ["GET", "POST"],
     credentials: true,
   })
@@ -65,6 +65,8 @@ app.get("/protected", authenticateToken, (req, res) => {
   res.send(`Hello ${req.user.username}, this is a protected route.`);
 });
 
+const rooms = {};
+
 io.on("connection", (socket) => {
   console.log("a user connected");
 
@@ -73,6 +75,11 @@ io.on("connection", (socket) => {
     socket.join(room);
     console.log(`User ${username} joined room: ${room}`);
 
+    if (!rooms[room]) {
+      rooms[room] = [];
+    }
+    rooms[room].push({ username, micOn: false, status: "online" });
+
     socket.data.username = username;
     socket.data.room = room;
 
@@ -80,10 +87,24 @@ io.on("connection", (socket) => {
       username: "System",
       message: `${username} 님이 입장하셨습니다.`,
     });
+
+    io.to(room).emit("userList", rooms[room]);
+  });
+
+  socket.on("toggleMic", (data) => {
+    const { username, micOn } = data;
+    const room = socket.data.room;
+    if (room) {
+      const user = rooms[room].find((user) => user.username === username);
+      if (user) user.micOn = micOn;
+
+      io.to(room).emit("userList", rooms[room]);
+    }
   });
 
   socket.on("chat", (data) => {
-    console.log(`message: ${data.username}: ${data.message}`);
+    console.log(`message - ${data.username}: ${data.message}`);
+
     io.to(data.room).emit("chat", {
       username: data.username,
       message: data.message,
@@ -91,7 +112,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("signal", (data) => {
-    io.to(data.room).emit("signal", data);
+    const { signal, receiver } = data;
+
+    io.to(receiver).emit("signal", { signal, sender: socket.data.username });
   });
 
   socket.on("disconnect", () => {
@@ -99,10 +122,15 @@ io.on("connection", (socket) => {
     const room = socket.data.room;
 
     if (room && username) {
+      const user = rooms[room].find((user) => user.username === username);
+      if (user) user.status = "offline";
+
       io.to(room).emit("chat", {
         username: "System",
         message: `${username} 님이 나가셨습니다.`,
       });
+
+      io.to(room).emit("userList", rooms[room]);
     }
 
     console.log(`User ${username} disconnected from room: ${room}`);
