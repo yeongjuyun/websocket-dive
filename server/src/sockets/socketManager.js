@@ -5,7 +5,7 @@ const rooms = {};
 const initSocket = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: "http://172.30.10.105:3000",
+      origin: "http://localhost:3000",
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -46,6 +46,25 @@ const initSocket = (server) => {
       }
     });
 
+    socket.on("startAudio", (data) => {
+      const { username } = data;
+      const room = socket.data.room;
+      socket.to(room).emit("audioStreamStarted", { username });
+    });
+
+    socket.on("audioData", (track) => {
+      const room = socket.data.room;
+      if (room) {
+        socket.to(room).emit("audioData", track);
+      }
+    });
+
+    socket.on("stopAudio", (data) => {
+      const { username } = data;
+      const room = socket.data.room;
+      socket.to(room).emit("audioStreamStopped", { username });
+    });
+
     socket.on("chat", (data) => {
       console.log(`message - ${data.username}: ${data.message}`);
 
@@ -53,12 +72,6 @@ const initSocket = (server) => {
         username: data.username,
         message: data.message,
       });
-    });
-
-    socket.on("signal", (data) => {
-      const { signal, receiver } = data;
-
-      io.to(receiver).emit("signal", { signal, sender: socket.data.username });
     });
 
     socket.on("disconnect", () => {

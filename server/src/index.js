@@ -12,7 +12,7 @@ const server = http.createServer(app);
 
 app.use(
   cors({
-    origin: "http://172.30.10.105:3000",
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
     credentials: true,
   })
