@@ -1,30 +1,32 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import useSocket from "../hooks/useSocket";
 
 const Chat: React.FC<{ roomId: string; username: string }> = ({
   roomId,
   username,
 }) => {
-  const { messages, message, users, setMessage, sendMessage, toggleMic } =
-    useSocket({
-      username,
-      room: roomId,
-    });
-  const chatboxRef = useRef<HTMLDivElement>(null);
-
-  const sortedUsers = [...users].sort((a, b) => {
-    if (a.status === "online" && b.status === "offline") return -1;
-    if (a.status === "offline" && b.status === "online") return 1;
-    return 0;
+  const { users, messages, sendMessage, toggleMic } = useSocket({
+    username,
+    roomId,
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMessage(e.target.value);
-  };
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const chatboxRef = useRef<HTMLDivElement>(null);
+
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => {
+      if (a.status === "online" && b.status === "offline") return -1;
+      if (a.status === "offline" && b.status === "online") return 1;
+      return 0;
+    });
+  }, [users]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    sendMessage(username);
+    if (inputRef.current && inputRef.current.value.trim() !== "") {
+      sendMessage(username, inputRef.current.value);
+      inputRef.current.value = "";
+    }
   };
 
   useEffect(() => {
@@ -148,9 +150,8 @@ const Chat: React.FC<{ roomId: string; username: string }> = ({
         }}
       >
         <input
+          ref={inputRef}
           type="text"
-          value={message}
-          onChange={handleInputChange}
           placeholder="Type a message..."
           style={{
             flexGrow: 1,

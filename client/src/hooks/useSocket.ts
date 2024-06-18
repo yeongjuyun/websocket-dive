@@ -12,60 +12,66 @@ interface User {
   status: string;
 }
 
-const useChat = ({ username, room }: { username: string; room: string }) => {
+const useChat = ({
+  username,
+  roomId,
+}: {
+  username: string;
+  roomId: string;
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [message, setMessage] = useState<string>("");
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [micOn, setMicOn] = useState<boolean>(false);
 
-  useEffect(() => {
-    const newSocket = io("http://localhost:8080");
-    setSocket(newSocket);
+  const socketRef = useRef<Socket | null>(null);
 
-    newSocket.on("connect", () => {
+  useEffect(() => {
+    socketRef.current = io("http://localhost:8080");
+
+    socketRef.current.on("connect", () => {
       console.log("Connected to the server");
-      newSocket.emit("join", { room, username });
+      if (socketRef.current) {
+        socketRef.current.emit("join", { roomId, username });
+      }
     });
 
-    newSocket.on("chat", (msg: Message) => {
+    socketRef.current.on("chat", (msg: Message) => {
       setMessages((prevMessages) => [...prevMessages, msg]);
     });
 
-    newSocket.on("userList", (userList: User[]) => {
+    socketRef.current.on("userList", (userList: User[]) => {
       setUsers(userList);
     });
 
-    newSocket.on("disconnect", () => {
+    socketRef.current.on("disconnect", () => {
       console.log("Disconnected from the server");
     });
 
     return () => {
-      newSocket.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
     };
-  }, [username, room]);
+  }, [username, roomId]);
 
-  const sendMessage = (username: string) => {
-    if (socket && message.trim() !== "") {
-      socket.emit("chat", { room, username, message });
-      setMessage("");
+  const sendMessage = (username: string, message: string) => {
+    if (socketRef.current) {
+      socketRef.current.emit("chat", { roomId, username, message });
     }
   };
 
   const toggleMic = () => {
-    if (socket) {
+    if (socketRef.current) {
       const newMicStatus = !micOn;
       setMicOn(newMicStatus);
-      socket.emit("toggleMic", { username, micOn: newMicStatus });
+      socketRef.current.emit("toggleMic", { username, micOn: newMicStatus });
     }
   };
 
   return {
     messages,
-    message,
     users,
     micOn,
-    setMessage,
     sendMessage,
     toggleMic,
   };
