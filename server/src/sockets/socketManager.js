@@ -34,7 +34,7 @@ const initSocket = (server) => {
         (user) => user.id !== socket.id
       );
 
-      io.to(roomId).emit("all users", usersExceptMe);
+      io.to(socket.id).emit("all users", usersExceptMe);
 
       io.to(roomId).emit("users", rooms[roomId]);
     });
@@ -80,6 +80,7 @@ const initSocket = (server) => {
         room = room.filter((user) => user.id !== socket.id);
         rooms[roomId] = room;
         io.to(roomId).emit("users", rooms[roomId]);
+        io.to(roomId).emit("disconnect user", { userId: socket.id });
       }
     });
   });
