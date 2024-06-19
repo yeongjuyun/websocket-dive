@@ -26,7 +26,15 @@ const Room: React.FC = () => {
     );
   }
 
-  return <div>{roomId && <Chat username={username} roomId={roomId} />}</div>;
+  return (
+    <div>
+      {roomId && (
+        <div>
+          <Chat username={username} roomId={roomId} />
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default Room;

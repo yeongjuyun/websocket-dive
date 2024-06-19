@@ -14,64 +14,73 @@ const initSocket = (server) => {
   io.on("connection", (socket) => {
     console.log("a user connected");
 
-    socket.on("join", (data) => {
-      const { room, username } = data;
-      socket.join(room);
-      console.log(`User ${username} joined room: ${room}`);
+    socket.on("join", ({ roomId, username }) => {
+      socket.join(roomId);
 
-      if (!rooms[room]) {
-        rooms[room] = [];
-      }
-      rooms[room].push({ username, micOn: false, status: "online" });
-
+      socket.data.roomId = roomId;
       socket.data.username = username;
-      socket.data.room = room;
 
-      socket.to(room).emit("chat", {
-        username: "System",
-        message: `${username} 님이 입장하셨습니다.`,
+      if (!rooms[roomId]) {
+        rooms[roomId] = [];
+      }
+
+      rooms[roomId].push({
+        id: socket.id,
+        username: username,
+        micOn: false,
       });
 
-      io.to(room).emit("userList", rooms[room]);
+      const usersExceptMe = rooms[roomId].filter(
+        (user) => user.id !== socket.id
+      );
+
+      io.to(roomId).emit("all users", usersExceptMe);
+
+      io.to(roomId).emit("users", rooms[roomId]);
+    });
+
+    socket.on("sending signal", (payload) => {
+      io.to(payload.userToSignal).emit("user joined", {
+        signal: payload.signal,
+        callerID: payload.callerID,
+      });
+    });
+
+    socket.on("returning signal", (payload) => {
+      io.to(payload.callerID).emit("receiving returned signal", {
+        signal: payload.signal,
+        id: socket.id,
+      });
     });
 
     socket.on("toggleMic", (data) => {
       const { username, micOn } = data;
-      const room = socket.data.room;
-      if (room) {
-        const user = rooms[room].find((user) => user.username === username);
+      const roomId = socket.data.roomId;
+
+      if (roomId) {
+        const user = rooms[roomId].find((user) => user.username === username);
         if (user) user.micOn = micOn;
 
-        io.to(room).emit("userList", rooms[room]);
+        io.to(roomId).emit("users", rooms[roomId]);
       }
     });
 
     socket.on("chat", (data) => {
-      console.log(`message - ${data.username}: ${data.message}`);
-
-      io.to(data.room).emit("chat", {
+      io.to(data.roomId).emit("chat", {
         username: data.username,
         message: data.message,
       });
     });
 
     socket.on("disconnect", () => {
-      const username = socket.data.username;
-      const room = socket.data.room;
+      const roomId = socket.data.roomId;
 
-      if (room && username) {
-        const user = rooms[room].find((user) => user.username === username);
-        if (user) user.status = "offline";
-
-        io.to(room).emit("chat", {
-          username: "System",
-          message: `${username} 님이 나가셨습니다.`,
-        });
-
-        io.to(room).emit("userList", rooms[room]);
+      let room = rooms[roomId];
+      if (room) {
+        room = room.filter((user) => user.id !== socket.id);
+        rooms[roomId] = room;
+        io.to(roomId).emit("users", rooms[roomId]);
       }
-
-      console.log(`User ${username} disconnected from room: ${room}`);
     });
   });
 };

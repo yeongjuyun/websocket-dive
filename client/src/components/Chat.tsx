@@ -1,25 +1,39 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import useSocket from "../hooks/useSocket";
+
+const Video = (props: any) => {
+  const ref = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (props.peer) {
+      props.peer.on("stream", (stream: MediaStream) => {
+        if (ref.current) ref.current.srcObject = stream;
+      });
+    }
+  }, []);
+
+  return (
+    <video
+      ref={ref}
+      playsInline
+      autoPlay
+      style={{ width: "50%", height: "40%" }}
+    />
+  );
+};
 
 const Chat: React.FC<{ roomId: string; username: string }> = ({
   roomId,
   username,
 }) => {
-  const { users, messages, sendMessage, toggleMic } = useSocket({
-    username,
-    roomId,
-  });
+  const { users, messages, userVideo, peers, sendMessage, toggleMic } =
+    useSocket({
+      username,
+      roomId,
+    });
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const chatboxRef = useRef<HTMLDivElement>(null);
-
-  const sortedUsers = useMemo(() => {
-    return [...users].sort((a, b) => {
-      if (a.status === "online" && b.status === "offline") return -1;
-      if (a.status === "offline" && b.status === "online") return 1;
-      return 0;
-    });
-  }, [users]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,11 +92,7 @@ const Chat: React.FC<{ roomId: string; username: string }> = ({
               overflowY: "auto",
             }}
           >
-            {sortedUsers.map((user, index) => {
-              const userStyle = {
-                color: user.status === "online" ? "green" : "gray",
-                fontWeight: user.status === "online" ? "bold" : "normal",
-              };
+            {users.map((user, index) => {
               return (
                 <li
                   key={index}
@@ -93,9 +103,7 @@ const Chat: React.FC<{ roomId: string; username: string }> = ({
                     marginBottom: "5px",
                   }}
                 >
-                  <span style={userStyle}>
-                    {user.username} ({user.status})
-                  </span>
+                  <span>{user.username}</span>
                   <button
                     onClick={() => user.username === username && toggleMic()}
                     style={{
@@ -177,6 +185,18 @@ const Chat: React.FC<{ roomId: string; username: string }> = ({
           Send
         </button>
       </form>
+      <div>
+        <video
+          muted
+          ref={userVideo}
+          autoPlay
+          playsInline
+          style={{ width: "50%", height: "40%" }}
+        />
+        {peers.map((peer, index) => {
+          return <Video key={index} peer={peer} />;
+        })}
+      </div>
     </div>
   );
 };
