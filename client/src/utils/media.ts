@@ -6,7 +6,7 @@ export const createPeer = (
   socket: Socket,
   stream: MediaStream,
   callerId: string,
-  userToSignal: string
+  calleeId: string,
 ) => {
   const peer = new Peer({
     initiator: true,
@@ -16,7 +16,7 @@ export const createPeer = (
 
   peer.on("signal", (signal) => {
     socket.emit(SOCKET_EVENT.media.sendSignal, {
-      userToSignal,
+      calleeId,
       callerId,
       signal,
     });
@@ -37,7 +37,7 @@ export const addPeer = (
   socket: Socket,
   incomingSignal: string,
   callerId: string,
-  stream: MediaStream
+  stream: MediaStream,
 ) => {
   const peer = new Peer({
     initiator: false,
@@ -67,7 +67,7 @@ export const addPeer = (
 
 export const changeMediaTrackEnabled = (
   stream: MediaStream,
-  enabled: boolean
+  enabled: boolean,
 ) => {
   const audioTrack = stream.getAudioTracks()[0];
   const videoTrack = stream.getVideoTracks()[0];

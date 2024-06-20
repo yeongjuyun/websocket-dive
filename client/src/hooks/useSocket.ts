@@ -26,9 +26,9 @@ const useSocket = (props: { username: string; roomId: string }) => {
 
   const initMediaConnection = () => {
     navigator.mediaDevices
-      .getUserMedia({ video: true, audio: true })
+      .getUserMedia({ video: false, audio: true })
       .then((stream) => {
-        userVideo.current!.srcObject = stream;
+        if (userVideo.current) userVideo.current.srcObject = stream;
         streamRef.current = stream;
         changeMediaTrackEnabled(streamRef.current, false);
 
@@ -53,7 +53,7 @@ const useSocket = (props: { username: string; roomId: string }) => {
       socketRef.current,
       payload.signal,
       payload.callerId,
-      streamRef.current!
+      streamRef.current!,
     );
 
     const newPeer = { id: payload.callerId, instance: peer };
@@ -68,7 +68,7 @@ const useSocket = (props: { username: string; roomId: string }) => {
         socketRef.current,
         streamRef.current!,
         socketRef.current.id!,
-        user.id
+        user.id,
       );
       const newPeer = { id: user.id, instance: peer };
       peersRef.current.push(newPeer);
@@ -90,7 +90,6 @@ const useSocket = (props: { username: string; roomId: string }) => {
       }
       return true;
     });
-
     peersRef.current = peers;
     setPeers(peers);
   };

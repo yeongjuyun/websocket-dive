@@ -40,7 +40,7 @@ const initSocket = (server) => {
     });
 
     socket.on("sending signal", (payload) => {
-      io.to(payload.userToSignal).emit("user joined", {
+      io.to(payload.calleeId).emit("user joined", {
         callerId: payload.callerId,
         signal: payload.signal,
       });

@@ -1,10 +1,9 @@
 import { useState } from "react";
-import Chat from "../components/Chat";
 import { useParams } from "react-router-dom";
+import ChatPanel from "../components/ChatPanel";
 
 const Room: React.FC = () => {
   const { roomId } = useParams();
-
   const [username, setUsername] = useState<string>("");
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
@@ -14,25 +13,26 @@ const Room: React.FC = () => {
 
   if (!isLoggedIn) {
     return (
-      <div>
-        <input
-          type="text"
-          placeholder="Enter your username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <button onClick={handleLogin}>Login</button>
+      <div className="flex h-screen w-screen items-center justify-center">
+        <form onSubmit={handleLogin}>
+          <input
+            type="text"
+            placeholder="Enter your username"
+            value={username}
+            className="border border-black px-4 py-2"
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <button type="submit" className="bg-blue-600 px-4 py-2 text-white">
+            Join
+          </button>
+        </form>
       </div>
     );
   }
 
   return (
-    <div>
-      {roomId && (
-        <div>
-          <Chat username={username} roomId={roomId} />
-        </div>
-      )}
+    <div className="flex h-screen w-screen items-center justify-center">
+      {roomId && <ChatPanel username={username} roomId={roomId} />}
     </div>
   );
 };
