@@ -1,12 +1,12 @@
 import React, { useEffect, useRef } from "react";
 import useSocket from "../hooks/useSocket";
 
-const Video = (props: any) => {
+const Video = ({ peer }: { peer: any }) => {
   const ref = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    if (props.peer) {
-      props.peer.on("stream", (stream: MediaStream) => {
+    if (peer) {
+      peer.on("stream", (stream: MediaStream) => {
         if (ref.current) ref.current.srcObject = stream;
       });
     }
@@ -193,9 +193,9 @@ const Chat: React.FC<{ roomId: string; username: string }> = ({
           playsInline
           style={{ width: "50%", height: "40%" }}
         />
-        {peers.map((peer, index) => {
-          return <Video key={index} peer={peer} />;
-        })}
+        {peers.map((peer) => (
+          <Video key={peer.id} peer={peer.instance} />
+        ))}
       </div>
     </div>
   );

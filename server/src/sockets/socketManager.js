@@ -41,15 +41,15 @@ const initSocket = (server) => {
 
     socket.on("sending signal", (payload) => {
       io.to(payload.userToSignal).emit("user joined", {
+        callerId: payload.callerId,
         signal: payload.signal,
-        callerID: payload.callerID,
       });
     });
 
     socket.on("returning signal", (payload) => {
-      io.to(payload.callerID).emit("receiving returned signal", {
+      io.to(payload.callerId).emit("receiving returned signal", {
+        calleeId: socket.id,
         signal: payload.signal,
-        id: socket.id,
       });
     });
 
