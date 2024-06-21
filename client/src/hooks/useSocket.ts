@@ -74,7 +74,7 @@ const useSocket = (props: { username: string; roomId: string }) => {
       peersRef.current.push(newPeer);
       peers.push(newPeer);
     });
-    setPeers(peers);
+    setPeers([...peers]);
   };
 
   const getSignal = (payload: { calleeId: string; signal: any }) => {
@@ -91,7 +91,7 @@ const useSocket = (props: { username: string; roomId: string }) => {
       return true;
     });
     peersRef.current = peers;
-    setPeers(peers);
+    setPeers([...peers]);
   };
 
   const sendMessage = (username: string, message: string) => {
